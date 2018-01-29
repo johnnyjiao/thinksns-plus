@@ -20,10 +20,13 @@ declare(strict_types=1);
 
 namespace Zhiyi\Plus\Http\Controllers\Admin;
 
+use DB;
 use Illuminate\Http\Request;
 use Zhiyi\Plus\Models\CommonConfig;
+use Zhiyi\Plus\Support\Configuration;
 use Zhiyi\Plus\Repository\CurrencyConfig;
 use Zhiyi\Plus\Http\Controllers\Controller;
+use Zhiyi\Plus\Models\CurrencyOrder as OrderModel;
 
 class CurrencyController extends Controller
 {
@@ -42,7 +45,11 @@ class CurrencyController extends Controller
      */
     public function showConfig()
     {
-        return response()->json($this->rep->get(), 200);
+        $config = [];
+        $config['basic_conf'] = $this->basicConfig();
+        $config['detail_conf'] = $this->rep->get();
+
+        return response()->json($config, 200);
     }
 
     /**
@@ -51,21 +58,106 @@ class CurrencyController extends Controller
      * @param  Request $request
      * @return mixed
      */
-    public function updateConfig(Request $request)
+    public function updateConfig(Request $request, Configuration $configuration)
     {
-        foreach ($request->all() as $key => $value) {
-            $field = $key == 'recharge-options' ? 'recharge-option' : $key;
+        $type = (string) $request->query('type');
 
-            $config = CommonConfig::where('name', sprintf('currency:%s', $field))
-            ->where('namespace', 'currency')
-            ->first();
+        if ($type == 'detail') {
+            foreach ($request->except('type') as $key => $value) {
+                $config = CommonConfig::where('name', sprintf('currency:%s', $key))
+                ->where('namespace', 'currency')
+                ->first();
+                $config->value = $value;
+                $config->save();
+            }
+            $this->rep->flush();
+        } else {
+            $data = $request->all();
 
-            $config->value = $value;
-            $config->save();
+            $config = $configuration->getConfiguration();
+            $config->set('currency.rule', (string) $data['rule']);
+            $config->set('currency.cash.rule', (string) $data['cash']['rule']);
+            $config->set('currency.cash.status', (bool) $data['cash']['status']);
+            $config->set('currency.recharge.rule', (string) $data['recharge']['rule']);
+            $config->set('currency.recharge.status', (bool) $data['recharge']['status']);
+
+            $configuration->save($config);
         }
 
-        $this->rep->flush();
-
         return response()->json(['message' => '更新成功'], 201);
+    }
+
+    /**
+     * 积分开关相关配置数据.
+     *
+     * @return array
+     */
+    protected function basicConfig(): array
+    {
+        $bootstrappers = [];
+
+        $bootstrappers['rule'] = config('currency.rule', null);
+        $bootstrappers['cash.rule'] = config('currency.cash.rule', null);
+        $bootstrappers['cash.status'] = config('currency.cash.status', true);
+        $bootstrappers['recharge.rule'] = config('currency.recharge.rule', null);
+        $bootstrappers['recharge.status'] = config('currency.recharge.status', true);
+
+        return $bootstrappers;
+    }
+
+    /**
+     * 积分流水.
+     *
+     * @param Request $request
+     * @param OrderModel $orderModel
+     * @return mixed
+     * @author BS <414606094@qq.com>
+     */
+    public function list(Request $request, OrderModel $orderModel)
+    {
+        $limit = $request->query('limit');
+        $after = $request->query('after');
+        $user = (int) $request->query('user');
+        $name = $request->query('name');
+        $action = $request->query('action');
+
+        $orders = $orderModel->when($after, function ($query) use ($after) {
+            return $query->where('id', '<', $after);
+        })
+        ->when($user, function ($query) use ($user) {
+            return $query->where('user_id', $user);
+        })
+        ->when($name, function ($query) use ($name) {
+            return $query->whereHas('user', function ($query) use ($name) {
+                return $query->where('name', 'like', '%'.$name);
+            });
+        })
+        ->when(in_array($action, [1, -1]), function ($query) use ($action) {
+            return $query->where('type', $action);
+        })
+        ->with('user')
+        ->limit($limit)
+        ->orderBy('id', 'desc')
+        ->get();
+
+        return response()->json($orders, 200);
+    }
+
+    /**
+     * 积分概览.
+     *
+     * @param Request $request
+     * @return mixed
+     * @author BS <414606094@qq.com>
+     */
+    public function overview(Request $request, OrderModel $orderModel)
+    {
+        $recharge = $orderModel->where('target_type', 'recharge')->select(DB::raw('count(id) as count, sum(amount) as sum'))->get();
+        $cash = $orderModel->where('target_type', 'cash')->select(DB::raw('count(id) as count, sum(amount) as sum'))->get();
+
+        return response()->json([
+            'recharge' => $recharge,
+            'cash' => $cash,
+        ], 200);
     }
 }
