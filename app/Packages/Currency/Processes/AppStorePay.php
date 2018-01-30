@@ -35,9 +35,9 @@ class AppStorePay extends Process
      */
     private $url = 'https://buy.itunes.apple.com/verifyReceipt';
 
-    public function __construct(boolen $sandbox = true)
+    public function __construct($sandbox = null)
     {
-        $this->sandbox = $sandbox;
+        $this->sandbox = (bool) $sandbox;
     }
 
     /**
@@ -58,12 +58,12 @@ class AppStorePay extends Process
 
             $data = json_decode($result, true);
             if ($data['status' !== 0]) {
-                throw new Exception($this->getStatusError($data['status']), 1);
+                throw new \Exception($this->getStatusError($data['status']), 1);
             }
 
             return $this->complete($currencyOrder);
         } catch (\Exception $exception) {
-            throw new Exception($exception->getMessage(), 1);
+            throw new \Exception($exception->getMessage(), 1);
         }
     }
 
