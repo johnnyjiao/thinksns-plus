@@ -61,7 +61,7 @@ class StoreCurrencyCash extends FormRequest
     {
         return [
             'amount.required' => '请选择需要提取的积分',
-            'amount.min' => '提取积分不合法',
+            'amount.min' => '最低提现金额：'.app(CurrencyConfig::class)->get()['cash-min'],
             'amount.max' => '账户积分余额不足或超出最大提现限制',
         ];
     }
