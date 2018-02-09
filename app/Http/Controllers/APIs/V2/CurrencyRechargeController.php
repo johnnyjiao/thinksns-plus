@@ -94,7 +94,7 @@ class CurrencyRechargeController extends Controller
     public function webhook(Request $request)
     {
         $webhook = new RechargeProcess();
-        if (($result = $webhook->webhook($request)) === true) {
+        if ($webhook->webhook($request) === true) {
             return response('通知成功');
         }
 
@@ -108,11 +108,11 @@ class CurrencyRechargeController extends Controller
      * @return mixed
      * @author BS <414606094@qq.com>
      */
-    public function retrieve(CurrencyOrderModel &$currencyOrder)
+    public function retrieve(CurrencyOrderModel $order)
     {
         $retrieve = new RechargeProcess();
-        if (($result = $retrieve->retrieve($currencyOrder)) === true) {
-            return response()->json($currencyOrder, 200);
+        if ($retrieve->retrieve($order) === true) {
+            return response()->json($order, 200);
         }
 
         return response()->json(['message' => ['操作失败']], 500);

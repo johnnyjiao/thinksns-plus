@@ -56,6 +56,7 @@ class NewWalletRechargeController extends Controller
                 return $query->where('type', $this->type[$action]);
             })
             ->limit($limit)
+            ->orderBy('id', 'desc')
             ->get();
 
         return response()->json($orders, 200);
@@ -93,7 +94,7 @@ class NewWalletRechargeController extends Controller
      */
     public function webhook(Request $request, TypeManager $manager)
     {
-        if (($result = $manager->driver(Order::TARGET_TYPE_RECHARGE_PING_P_P)->webhook($request)) === true) {
+        if ($manager->driver(Order::TARGET_TYPE_RECHARGE_PING_P_P)->webhook($request) === true) {
             return response('通知成功');
         }
 
@@ -103,14 +104,14 @@ class NewWalletRechargeController extends Controller
     /**
      * 主动取回凭据.
      *
-     * @param WalletOrderModel &$walletOrder
+     * @param WalletOrderModel $walletOrder
      * @return mixed
      * @author BS <414606094@qq.com>
      */
-    public function retrieve(WalletOrderModel &$walletOrder)
+    public function retrieve(WalletOrderModel $order, TypeManager $manager)
     {
-        if (($result = $manager->driver(Order::TARGET_TYPE_RECHARGE_PING_P_P)->retrieve($walletOrder)) === true) {
-            return response()->json($walletOrder, 200);
+        if ($manager->driver(Order::TARGET_TYPE_RECHARGE_PING_P_P)->retrieve($order) === true) {
+            return response()->json($order, 200);
         }
 
         return response()->json(['message' => ['操作失败']], 500);
@@ -129,7 +130,7 @@ class NewWalletRechargeController extends Controller
         $user = $request->user();
         $amount = (int) $request->input('amount');
 
-        if (($result = $manager->driver(Order::TARGET_TYPE_TRANSFORM)->transform($user, $amount)) === true) {
+        if ($manager->driver(Order::TARGET_TYPE_TRANSFORM)->transform($user, $amount) === true) {
             return response()->json(['message' => ['操作成功']], 201);
         }
 

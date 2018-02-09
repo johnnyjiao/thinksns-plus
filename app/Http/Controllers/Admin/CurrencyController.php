@@ -66,11 +66,19 @@ class CurrencyController extends Controller
         $type = (string) $request->query('type');
 
         if ($type == 'detail') {
-            foreach ($request->except('type') as $key => $value) {
+            $input = $request->except('type');
+            $input['recharge-option'] = str_replace('，', ',', $input['recharge-option']);
+            $options = explode(',', $input['recharge-option']);
+            $input['recharge-option'] = implode(',', array_filter(array_map(function ($option) {
+                return (int) $option;
+            }, $options)));
+
+            foreach ($input as $key => $value) {
                 $config = CommonConfig::where('name', sprintf('currency:%s', $key))
                 ->where('namespace', 'currency')
                 ->first();
-                $config->value = ($key == 'recharge-option') ? str_replace('，', ',', $value) : $value;
+
+                $config->value = $value;
                 $config->save();
             }
             $this->rep->flush();
@@ -157,7 +165,7 @@ class CurrencyController extends Controller
      * @return mixed
      * @author BS <414606094@qq.com>
      */
-    public function overview(Request $request, OrderModel $orderModel)
+    public function overview(OrderModel $orderModel)
     {
         $recharge = $orderModel->where('target_type', 'recharge')->select(DB::raw('count(id) as count, sum(amount) as sum'))->first();
         $cash = $orderModel->where('target_type', 'cash')->select(DB::raw('count(id) as count, sum(amount) as sum'))->first();

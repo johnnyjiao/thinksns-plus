@@ -218,6 +218,11 @@ Route::group(['prefix' => 'v2'], function (RouteContract $api) {
     // Retrieve user password.
     $api->put('/user/retrieve-password', API2\ResetPasswordController::class.'@retrieve');
 
+    // IAP帮助页
+    $api->get('/currency/apple-iap/help', function () {
+        return view('apple-iap-help');
+    });
+
     /*
     |-----------------------------------------------------------------------
     | Define a route that requires user authentication.
@@ -511,6 +516,9 @@ Route::group(['prefix' => 'v2'], function (RouteContract $api) {
             //批量注册环信用户
             $api->post('/register', EaseMobIm\EaseMobController::class.'@createUsers');
 
+            // 为未注册环信用户注册环信（兼容老用户）
+            $api->post('/register-old-users', EaseMobIm\EaseMobController::class.'@registerOldUsers');
+
             // 重置用户环信密码
             $api->put('/password', EaseMobIm\EaseMobController::class.'@resetPassword');
 
@@ -571,6 +579,11 @@ Route::group(['prefix' => 'v2'], function (RouteContract $api) {
 
             // IAP商品列表
             $api->get('/apple-iap/products', API2\CurrencyApplePayController::class.'@productList');
+
+            // 积分商城（待开发）
+            $api->get('/shop', function () {
+                return view('currency-developing');
+            });
         });
     });
 });

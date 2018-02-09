@@ -1,4 +1,4 @@
-<p align="center"><img src="https://github.com/slimkit/thinksns-plus/blob/master/public/plus.png"></p>
+<p align="center"><img src="https://github.com/slimkit/thinksns-plus/raw/master/public/plus.png"></p>
 
 Plus (ThinkSNS Plus) 是一个使用 Laravel 开发，并且功能繁多且健壮的社交程序。Plus 是遵循 **PSR 规范** 代码统一，并功能块松耦合。你安装完成 Plus 并不意味着已经成功安装了所有功能，因为 Plus 使用 **模块化** 的
 原则，所以你安装完成后拥有了所有可以被请求的 REST 接口和后台管理面板，你可能还需要安装如下模块：
@@ -104,7 +104,7 @@ php artisan serve
 
 针对不同的用户，我们准备了两个 QQ 群，分别是：
 
-- 技术交流群：`651240785`，该群适合技术交流，不接受普通用户加入。
+- 技术交流群：`NjUxMjQwNzg1`，该群适合技术交流，不接受普通用户加入。（解码提示：`*toa`）
 - 用户交流群：`638051536`，该群所有人都可以加入并进行交流。
 
 ## 贡献

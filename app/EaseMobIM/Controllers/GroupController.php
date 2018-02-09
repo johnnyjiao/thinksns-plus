@@ -76,7 +76,11 @@ class GroupController extends EaseMobController
 
             // 发送消息至群组
             $cmd_content = $request->user()->name.'创建了群聊！';
-            $isCmd = $this->sendCmd($cmd_content, [$imGroup->im_group_id]);
+            $ext = [
+                'type' => 'ts_group_create',
+                'group_id' => $imGroup->im_group_id,
+            ];
+            $isCmd = $this->sendCmd($cmd_content, [$imGroup->im_group_id], 'admin', 'chatgroups', $ext);
 
             if (! $isCmd) {
                 return response()->json([
@@ -162,7 +166,11 @@ class GroupController extends EaseMobController
 
             // 发送消息至群组
             $cmd_content = $request->user()->name.'修改了群信息！';
-            $isCmd = $this->sendCmd($cmd_content, [$im_group_id]);
+            $ext = [
+                'type' => 'ts_group_change',
+                'group_id' => $im_group_id,
+            ];
+            $isCmd = $this->sendCmd($cmd_content, [$im_group_id], 'admin', 'chatgroups', $ext);
 
             if (! $isCmd) {
                 return response()->json([
@@ -260,7 +268,7 @@ class GroupController extends EaseMobController
             $group_face = ImGroup::with('face')->whereIn('im_group_id', collect($groupCon->data)->pluck('id'))
                 ->select('group_face', 'im_group_id')->get()->keyBy('im_group_id');
 
-            foreach ($groupCon->data as $key => &$group) {
+            foreach ($groupCon->data as &$group) {
                 $affiliations = collect($group->affiliations);
                 $owner = $affiliations->pluck('owner')->filter();
                 $members = $affiliations->pluck('member')->filter();
@@ -313,7 +321,7 @@ class GroupController extends EaseMobController
             });
         }
 
-        return $users;
+        return $users->sortByDesc('is_owner')->values();
     }
 
     /**
@@ -355,7 +363,11 @@ class GroupController extends EaseMobController
             }
             // 发送消息至群组
             $cmd_content = $request->user()->name.'邀请了'.$names.'加入了群聊。';
-            $isCmd = $this->sendCmd($cmd_content, [$im_group_id]);
+            $ext = [
+                'type' => 'ts_user_join',
+                'uid' => $option['usernames'],
+            ];
+            $isCmd = $this->sendCmd($cmd_content, [$im_group_id], 'admin', 'chatgroups', $ext);
 
             if (! $isCmd) {
                 return response()->json([
@@ -408,7 +420,11 @@ class GroupController extends EaseMobController
             }
             // 发送消息至群组
             $cmd_content = $request->user()->name.'已将'.$names.'移出群聊。';
-            $isCmd = $this->sendCmd($cmd_content, [$im_group_id]);
+            $ext = [
+                'type' => 'ts_user_exit',
+                'uid' => $members,
+            ];
+            $isCmd = $this->sendCmd($cmd_content, [$im_group_id], 'admin', 'chatgroups', $ext);
 
             if (! $isCmd) {
                 return response()->json([
